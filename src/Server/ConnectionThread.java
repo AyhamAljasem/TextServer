@@ -33,7 +33,7 @@ public class ConnectionThread {
                             view(fileName,new DataOutputStream(socket.getOutputStream()));
                         }
                         else {
-                            edit(fileName,text);
+                            edit(fileName,text,new DataOutputStream(socket.getOutputStream()));
                         }
                     }
                     else
@@ -85,7 +85,7 @@ public class ConnectionThread {
             }
         }
     }
-    public void edit(String fileName,String text)
+    public void edit(String fileName,String text,DataOutputStream dataOutputStream)
     {
         File file= new File("TextFiles/"+fileName+".txt");
         if(!file.exists()) {
@@ -101,6 +101,7 @@ public class ConnectionThread {
             fileWriter.write(text);
             fileWriter.close();
             System.out.println("Successfully wrote to the file.");
+            view(fileName,dataOutputStream);
         } catch (IOException e) {
             e.printStackTrace();
         }
