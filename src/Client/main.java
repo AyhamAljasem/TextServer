@@ -24,10 +24,15 @@ public class main {
             DataInputStream inputStream=new DataInputStream(socket.getInputStream());
             DataOutputStream outputStream=new DataOutputStream(socket.getOutputStream());
             outputStream.writeUTF(( new Random().nextInt())+" oops");
-            outputStream.writeUTF("test");
+            outputStream.writeUTF("testW");
+            outputStream.writeUTF("Written from Client");
             outputStream.writeUTF("Exit");
+            try{
+            System.out.println(inputStream.readUTF());}
+            catch (Exception e)
+            {
 
-            System.out.println(inputStream.readUTF());
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

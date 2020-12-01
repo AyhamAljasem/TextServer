@@ -87,6 +87,24 @@ public class ConnectionThread {
     }
     public void edit(String fileName,String text)
     {
+        File file= new File("TextFiles/"+fileName+".txt");
+        if(!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        FileWriter fileWriter = null;
+        try {
+            fileWriter = new FileWriter(file.getPath());
+            fileWriter.write(text);
+            fileWriter.close();
+            System.out.println("Successfully wrote to the file.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
 
     }
 
