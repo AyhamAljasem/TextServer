@@ -1,5 +1,5 @@
 package Basic;
 
 public enum Operations {
-    List,Edit,Update,Delete,Terminate,Auth
+    List,Edit,View,Delete,Terminate,Auth,HandShake,NoHandShake
 }

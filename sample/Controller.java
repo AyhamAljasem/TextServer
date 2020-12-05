@@ -1,4 +1,4 @@
-package sample;
+package Client.UI;
 
 public class Controller {
 }

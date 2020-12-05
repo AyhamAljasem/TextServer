@@ -46,26 +46,41 @@ public class ConnectionThread {
             IP_Address=dataInputStream.readUTF();
             System.out.println(encryption);
             dataOutputStream.writeUTF(Encrypt(Response.Ok.toString()));
-            Operations operations= Operations.valueOf(decrypt(dataInputStream.readUTF()));
+            Operations operations= Operations.valueOf((dataInputStream.readUTF()));
             while (operations!=Operations.Terminate||operations!=null)
             {
+                if(operations.equals(Operations.Terminate))
+                {
+                    System.out.println("Exiting....");
+                    socket.close();
+                    break;
+                }
                 switch (operations)
                 {
                     case List:
                         System.out.println("List");
                         break;
                     case Edit:
-                        System.out.println("edit");
+                        Edit();
                         break;
                     case Delete:
                         System.out.println("delete");
                         break;
-                    case Update:
-                        System.out.println("update");
+                    case View:
+                        view();
+                        break;
+                    case Auth:
+                        if(Operations.valueOf(dataInputStream.readUTF()).equals(Operations.HandShake))
+                            HandShake();
+                        else
+                            NoHandShake();
+                        break;
+                    case Terminate:
                         break;
 
                 }
-                operations= Operations.valueOf(decrypt(dataInputStream.readUTF()));
+                operations= Operations.valueOf((dataInputStream.readUTF()));
+
 
             }
 
@@ -129,13 +144,38 @@ public class ConnectionThread {
     {
 
     }*/
-    public void Auth()
-    {
-        if(main.keys.get(IP_Address)==null)
+   /* public void Auth() {
+        PGP pgp= null;
+        try {
+            pgp = new PGP("Server");
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        }
+        Response op=null;
+        try {
+            op= Response.valueOf(dataInputStream.readUTF());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        if(main.keys.get(IP_Address)==null&&op.equals(Response.NoHandShake))
         {
             try {
-                dataOutputStream.writeUTF();
-                X509EncodedKeySpec spec = new X509EncodedKeySpec(dataInputStream.readUTF().getBytes());
+                dataOutputStream.writeUTF(Response.Denied.toString());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            return;
+        }
+        else if(op.equals(Response.HandShake))
+        {
+            try {
+                dataOutputStream.writeUTF(Base64.getEncoder().encodeToString(pgp.getPublicKey().getEncoded()));
+                X509EncodedKeySpec spec = new X509EncodedKeySpec(Base64.getDecoder().decode(dataInputStream.readUTF()));
                 KeyFactory kf = KeyFactory.getInstance("RSA");
                 main.keys.put(IP_Address,kf.generatePublic(spec));
 
@@ -149,7 +189,6 @@ public class ConnectionThread {
 
         }
         try {
-            PGP pgp=new PGP("Server");
             try {
                 dataOutputStream.writeUTF(Base64.getEncoder().encodeToString(pgp.getPublicKey().getEncoded()));
                 key=Base64.getEncoder().encodeToString( Symmetric.createAESKey().getEncoded());
@@ -179,9 +218,70 @@ public class ConnectionThread {
         } catch (NoSuchPaddingException e) {
             e.printStackTrace();
         }
+    }*/
+    public void HandShake(){
+        try {
+            PGP pgp=new PGP("Server");
+            //dataOutputStream.writeUTF(Operations.Auth.toString());
+           // dataOutputStream.writeUTF(Operations.HandShake.toString());
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(Base64.getDecoder().decode(dataInputStream.readUTF()));
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            main.keys.put(IP_Address,kf.generatePublic(spec));
+            dataOutputStream.writeUTF(Base64.getEncoder().encodeToString(pgp.getPublicKey().getEncoded()));
+            //dataOutputStream.writeUTF(pgp.encryptText(Base64.getEncoder().encodeToString(Symmetric.createAESKey().getEncoded()),pgp.getPrivateKey()));
+            key=pgp.decryptText(dataInputStream.readUTF(),main.keys.get(IP_Address));
+            System.out.println("My Public Key: "+Base64.getEncoder().encodeToString(pgp.getPublicKey().getEncoded()));
+            System.out.println("____________________________________________________________________________________");
+            System.out.println("My Private Key: "+Base64.getEncoder().encodeToString(pgp.getPrivateKey().getEncoded()));
+            System.out.println("____________________________________________________________________________________");
+            System.out.println(IP_Address+" Public Key: "+Base64.getEncoder().encodeToString(main.keys.get(IP_Address).getEncoded()));
+            System.out.println("____________________________________________________________________________________");
+            System.out.println("Secret Key: "+key);
+            System.out.println("____________________________________________________________________________________");
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
-    public String Encrypt(String txt)
-    {
+    public void NoHandShake(){
+        try {
+            PGP pgp=new PGP("Server");
+            key=pgp.decryptText(dataInputStream.readUTF(),main.keys.get(IP_Address));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public String Encrypt(String txt) {
         switch (encryption)
         {
             case non:
@@ -190,7 +290,7 @@ public class ConnectionThread {
                 break;
             case Symmetric:
                 try {
-                    return new String(Base64.getEncoder().encodeToString(Symmetric.do_AESEncryption(txt, Symmetric.getDefault(),Connection.IV)));
+                    return new String(Base64.getEncoder().encodeToString(Symmetric.do_AESEncryption(txt,key==null?Symmetric.getDefault():Symmetric.getkeys(key),Connection.IV)));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -198,8 +298,7 @@ public class ConnectionThread {
         }
         return null;
     }
-    public String decrypt(String txt)
-    {
+    public String decrypt(String txt) {
         switch (encryption)
         {
             case non:
@@ -208,7 +307,7 @@ public class ConnectionThread {
                 break;
             case Symmetric:
                 try {
-                    return Symmetric.do_AESDecryption(Base64.getDecoder().decode(txt),Symmetric.getDefault(),Connection.IV);
+                    return Symmetric.do_AESDecryption(Base64.getDecoder().decode(txt),key==null?Symmetric.getDefault():Symmetric.getkeys(key),Connection.IV);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -216,12 +315,18 @@ public class ConnectionThread {
         }
         return null;
     }
-    public void view(String fileName) {
+    public void view() {
+        String fileName= null;
+        try {
+            fileName = decrypt(dataInputStream.readUTF());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
         File file= new File("TextFiles/"+fileName+".txt");
         if(!file.exists())
         {
             try {
-                dataOutputStream.writeUTF("File Not Found");
+                dataOutputStream.writeUTF(Encrypt("File Not Found"));
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -230,12 +335,41 @@ public class ConnectionThread {
             String text;
             try {
                 text = new String(Files.readAllBytes(Paths.get("TextFiles/"+fileName+".txt")));
-                dataOutputStream.writeUTF(text);
+                dataOutputStream.writeUTF(Encrypt(text));
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
     }
+    public void Edit() {
+        String fileName= null;
+        String txt=null;
+        try {
+            fileName = decrypt(dataInputStream.readUTF());
+            txt = decrypt(dataInputStream.readUTF());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        File file= new File("TextFiles/"+fileName+".txt");
+        if(!file.exists()) {
+            try {
+                file.createNewFile();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+        FileWriter fileWriter = null;
+        try {
+            fileWriter = new FileWriter(file.getPath());
+            fileWriter.write(txt);
+            fileWriter.close();
+            System.out.println("Successfully wrote to the file.");
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public void edit(String fileName,String text) {
         File file= new File("TextFiles/"+fileName+".txt");
         if(!file.exists()) {
@@ -251,7 +385,7 @@ public class ConnectionThread {
             fileWriter.write(text);
             fileWriter.close();
             System.out.println("Successfully wrote to the file.");
-            view(fileName);
+            view();
         } catch (IOException e) {
             e.printStackTrace();
         }

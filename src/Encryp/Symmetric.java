@@ -43,7 +43,12 @@ public static SecretKey getDefault()
     SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
     return keySpec;
 }
-
+    public static SecretKey getkeys(String s)
+    {
+        byte[] keyBytes = Base64.getDecoder().decode(s);
+        SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
+        return keySpec;
+    }
     // Function to initialize a vector
     // with an arbitrary value
     public static byte[] createInitializationVector()

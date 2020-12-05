@@ -9,11 +9,13 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.security.PublicKey;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
 
 public class main {
     public static Map<String, PublicKey> keys;
     public static void main(String[] args) {
+        keys=new HashMap<>();
        ServerSocket serverSocket=null;
         Socket socket=null;
         try{

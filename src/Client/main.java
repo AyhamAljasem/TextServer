@@ -14,6 +14,8 @@ import java.io.*;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.*;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
@@ -31,20 +33,14 @@ public class main {
         Socket socket=null;
         try {
             socket=new Socket(Connection.IP,Connection.PORT);
-            DataInputStream inputStream=new DataInputStream(socket.getInputStream());
-            DataOutputStream outputStream=new DataOutputStream(socket.getOutputStream());
-            Client client=new Client(outputStream,inputStream);
+
+            Client client=new Client(socket);
             client.Connect();
           /*  outputStream.writeUTF(( new Random().nextInt())+" oops");
             outputStream.writeUTF("testW");
             outputStream.writeUTF("Written from Client");
             outputStream.writeUTF("Exit");*/
-            try{
-            System.out.println(inputStream.readUTF());}
-            catch (Exception e)
-            {
 
-            }
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -63,81 +59,133 @@ class Client {
     public static String IP_ADDRESS;
     public static DataInputStream dataInputStream;
     public static DataOutputStream dataOutputStream;
+    public Socket socket;
     public static Encryption encryption=Encryption.Symmetric;
-    public boolean authinticated=false;
     private String key;
     Map<String, PublicKey> keys;
-    public Client(DataOutputStream dataOutputStream,DataInputStream dataInputStream){
-        this.dataInputStream=dataInputStream;
-        this.dataOutputStream=dataOutputStream;
+    public Client(Socket socket){
+
         try {
+            this.socket=socket;
+            dataInputStream=new DataInputStream(socket.getInputStream());
+            dataOutputStream=new DataOutputStream(socket.getOutputStream());
             IP_ADDRESS= InetAddress.getLocalHost().getHostAddress();
         } catch (UnknownHostException e) {
             System.out.println("Network Error");
+        } catch (IOException e) {
+            e.printStackTrace();
         }
         keys=new HashMap<>();
     }
     public void Connect() {
         try {
-
             dataOutputStream.writeUTF(encryption.toString());
             dataOutputStream.writeUTF(IP_ADDRESS);
             Response response= Response.valueOf(decrypt(dataInputStream.readUTF()));
             if(!response.equals(Response.Ok)) throw new IOException("Opening Connection Error"+response.toString());
-            else dataOutputStream.writeUTF(Encrypt("List"));
+            else {
+
+                Scanner s=new Scanner(new InputStreamReader(System.in)).useDelimiter("\n");
+                int choice=-1;
+                while (choice!=0)
+                {
+                    System.out.println("1-HandShake\n2-View\n3-Edit\n0-Exit");
+                    choice=s.nextInt();
+                    switch (choice)
+                    {
+                        case 1:
+                            HandShake(Connection.IP);
+                            break;
+                        case 2:
+                            System.out.println("File Name:\n");
+                            String fileName=s.next();
+                            View(fileName);
+                            break;
+                        case 3:
+                            System.out.println("File Name:\n");
+                            String fileName1=s.next();
+                            System.out.println("Text:\n");
+                            String txt=s.next();
+                            s.nextLine();
+                            Edit(fileName1,txt);
+                            break;
+                        case 0:
+                            dataOutputStream.writeUTF(Operations.Terminate.toString());
+                            break;
+                    }
+
+
+                }
+            }
         } catch (IOException e) {
             e.printStackTrace();
             System.out.println(e.getMessage());
         }
     }
-    public void Auth(String IP)
-    {
-        if(keys.get(IP)==null)
-        {
-            try {
-                dataOutputStream.writeUTF(Operations.Auth.toString());
-                X509EncodedKeySpec spec = new X509EncodedKeySpec(dataInputStream.readUTF().getBytes());
-                KeyFactory kf = KeyFactory.getInstance("RSA");
-                keys.put(IP,kf.generatePublic(spec));
-
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (NoSuchAlgorithmException e) {
-                e.printStackTrace();
-            } catch (InvalidKeySpecException e) {
-                e.printStackTrace();
-            }
-
-        }
+    public void HandShake(String IP_ADDRESS){
         try {
-            PGP pgp=new PGP(IP_ADDRESS);
-            try {
-                dataOutputStream.writeUTF(Base64.getEncoder().encodeToString(pgp.getPublicKey().getEncoded()));
-                key=Base64.getEncoder().encodeToString( Symmetric.createAESKey().getEncoded());
-                dataOutputStream.writeUTF(pgp.encryptText(key,pgp.getPrivateKey()));
-                while(true)
-                {
-                    if(Response.Ok.equals(Response.valueOf(dataInputStream.readUTF()))&&pgp.decryptText(dataInputStream.readUTF(),keys.get(IP)).equals(key))
-                        break;
-                    dataOutputStream.writeUTF(pgp.encryptText(Base64.getEncoder().encodeToString( Symmetric.createAESKey().getEncoded()),pgp.getPrivateKey()));
+            PGP pgp=new PGP(this.IP_ADDRESS);
+            dataOutputStream.writeUTF(Operations.Auth.toString());
+            dataOutputStream.writeUTF(Operations.HandShake.toString());
+            dataOutputStream.writeUTF(Base64.getEncoder().encodeToString(pgp.getPublicKey().getEncoded()));
+            X509EncodedKeySpec spec = new X509EncodedKeySpec(Base64.getDecoder().decode(dataInputStream.readUTF()));
+            KeyFactory kf = KeyFactory.getInstance("RSA");
+            keys.put(IP_ADDRESS,kf.generatePublic(spec));
+            key=Base64.getEncoder().encodeToString( Symmetric.createAESKey().getEncoded());
+            dataOutputStream.writeUTF(pgp.encryptText(key,pgp.getPrivateKey()));
+            System.out.println("My Public Key: "+Base64.getEncoder().encodeToString(pgp.getPublicKey().getEncoded()));
+            System.out.println("____________________________________________________________________________________");
+            System.out.println("My Private Key: "+Base64.getEncoder().encodeToString(pgp.getPrivateKey().getEncoded()));
+            System.out.println("____________________________________________________________________________________");
+            System.out.println(IP_ADDRESS+" Public Key: "+Base64.getEncoder().encodeToString(keys.get(IP_ADDRESS).getEncoded()));
+            System.out.println("____________________________________________________________________________________");
+            System.out.println("Secret Key: "+key);
+            System.out.println("____________________________________________________________________________________");
 
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            } catch (BadPaddingException e) {
-                e.printStackTrace();
-            } catch (IllegalBlockSizeException e) {
-                e.printStackTrace();
-            } catch (InvalidKeyException e) {
-                e.printStackTrace();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
         } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         } catch (NoSuchProviderException e) {
             e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    public void NoHandShake(String IP_ADDRESS){
+        try {
+            PGP pgp=new PGP(this.IP_ADDRESS);
+            dataOutputStream.writeUTF(Operations.Auth.toString());
+            dataOutputStream.writeUTF(Operations.NoHandShake.toString());
+            key=Base64.getEncoder().encodeToString( Symmetric.createAESKey().getEncoded());
+            dataOutputStream.writeUTF(pgp.encryptText(key,pgp.getPrivateKey()));
+        } catch (IOException e) {
+            e.printStackTrace();
         } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+        } catch (InvalidKeySpecException e) {
+            e.printStackTrace();
+        } catch (BadPaddingException e) {
+            e.printStackTrace();
+        } catch (IllegalBlockSizeException e) {
+            e.printStackTrace();
+        } catch (InvalidKeyException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -152,7 +200,7 @@ class Client {
                 break;
             case Symmetric:
                 try {
-                    return new String(Base64.getEncoder().encodeToString(Symmetric.do_AESEncryption(txt, Symmetric.getDefault(),Connection.IV)));
+                    return new String(Base64.getEncoder().encodeToString(Symmetric.do_AESEncryption(txt, key==null?Symmetric.getDefault():Symmetric.getkeys(key),Connection.IV)));
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -170,7 +218,7 @@ class Client {
                 break;
             case Symmetric:
                 try {
-                    return Symmetric.do_AESDecryption(Base64.getDecoder().decode(txt),Symmetric.getDefault(),Connection.IV);
+                    return Symmetric.do_AESDecryption(Base64.getDecoder().decode(txt),key==null?Symmetric.getDefault():Symmetric.getkeys(key),Connection.IV);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
@@ -196,5 +244,30 @@ class Client {
             e.printStackTrace();
         }
         return file;
+    }
+    public void View(String file){
+        try {
+            dataOutputStream.writeUTF(Operations.View.toString());
+            dataOutputStream.writeUTF(Encrypt(file));
+            System.out.println("Encrypted file name: "+Encrypt(file));
+            String txt=dataInputStream.readUTF();
+            System.out.println("Encrypted Text: "+txt);
+            System.out.println(decrypt(txt));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public void Edit(String file,String txt){
+        try {
+            dataOutputStream.writeUTF(Operations.Edit.toString());
+            dataOutputStream.writeUTF(Encrypt(file));
+            System.out.println("Encrypted file name: "+Encrypt(file));
+            dataOutputStream.writeUTF(Encrypt(txt));
+            System.out.println("Encrypted Text: "+Encrypt(txt));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
