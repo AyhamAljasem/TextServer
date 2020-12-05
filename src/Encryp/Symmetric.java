@@ -15,14 +15,11 @@ public class Symmetric {
     private static final String AES
             = "AES";
 
-    // We are using a Block cipher(CBC mode)
     private static final String AES_CIPHER_ALGORITHM
             = "AES/CBC/PKCS5PADDING";
 
     private static Scanner message;
 
-    // Function to create a
-    // secret key
     public static SecretKey createAESKey()
             throws Exception
     {
@@ -49,8 +46,6 @@ public static SecretKey getDefault()
         SecretKeySpec keySpec = new SecretKeySpec(keyBytes, "AES");
         return keySpec;
     }
-    // Function to initialize a vector
-    // with an arbitrary value
     public static byte[] createInitializationVector()
     {
 
@@ -63,10 +58,6 @@ public static SecretKey getDefault()
         return initializationVector;
     }
 
-    // This function takes plaintext,
-    // the key with an initialization
-    // vector to convert plainText
-    // into CipherText.
     public static byte[] do_AESEncryption(
             String plainText,
             SecretKey secretKey,
@@ -89,11 +80,6 @@ public static SecretKey getDefault()
                 plainText.getBytes());
     }
 
-    // This function performs the
-    // reverse operation of the
-    // do_AESEncryption function.
-    // It converts ciphertext to
-    // the plaintext using the key.
     public static String do_AESDecryption(
             byte[] cipherText,
             SecretKey secretKey,
@@ -119,49 +105,4 @@ public static SecretKey getDefault()
         return new String(result);
     }
 
-    // Driver code
-    public static void main(String args[])
-            throws Exception
-    {
-        SecretKey Symmetrickey
-                = createAESKey();
-
-      /*  System.out.println(
-                "The Symmetric Key is :"
-                        + DatatypeConverter.printHexBinary(
-                        Symmetrickey.getEncoded()));*/
-
-        byte[] initializationVector
-                = createInitializationVector();
-
-        String plainText
-                = "This is the message "
-                + "I want To Encrypt.";
-
-        // Encrypting the message
-        // using the symmetric key
-        byte[] cipherText
-                = do_AESEncryption(
-                plainText,
-                Symmetrickey,
-                initializationVector);
-
-     /*   System.out.println(
-                "The ciphertext or "
-                        + "Encrypted Message is: "
-                        + DatatypeConverter.printHexBinary(
-                        cipherText));*/
-
-        // Decrypting the encrypted
-        // message
-        String decryptedText
-                = do_AESDecryption(
-                cipherText,
-                Symmetrickey,
-                initializationVector);
-
-        System.out.println(
-                "Your original message is: "
-                        + decryptedText);
-    }
 }
