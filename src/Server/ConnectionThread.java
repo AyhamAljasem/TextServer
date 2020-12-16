@@ -134,7 +134,7 @@ public class ConnectionThread {
         if(main.keys.get(IP_Address)==null)
         {
             try {
-                dataOutputStream.writeUTF();
+                dataOutputStream.writeUTF(Operations.Auth.toString());
                 X509EncodedKeySpec spec = new X509EncodedKeySpec(dataInputStream.readUTF().getBytes());
                 KeyFactory kf = KeyFactory.getInstance("RSA");
                 main.keys.put(IP_Address,kf.generatePublic(spec));
