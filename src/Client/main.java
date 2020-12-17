@@ -4,8 +4,10 @@ import Basic.Connection;
 import Basic.Encryption;
 import Basic.Operations;
 import Basic.Response;
+import Encryp.CSR;
 import Encryp.PGP;
 import Encryp.Symmetric;
+import Encryp.digitalSignature;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -63,6 +65,8 @@ class Client {
     public static Encryption encryption=Encryption.Symmetric;
     private String key;
     Map<String, PublicKey> keys;
+    boolean sign=false;
+    boolean authinticated=false;
     public Client(Socket socket){
 
         try {
@@ -89,7 +93,7 @@ class Client {
                 int choice=-1;
                 while (choice!=0)
                 {
-                    System.out.println("1-HandShake\n2-View\n3-Edit\n0-Exit");
+                    System.out.println("1-HandShake\n2-View\n3-Edit\n4-Use Signature\n5-Verify Identity\n6-GenerateCertificate\n0-Exit");
                     choice=s.nextInt();
                     switch (choice)
                     {
@@ -109,6 +113,15 @@ class Client {
                             s.nextLine();
                             Edit(fileName1,txt);
                             break;
+                        case 4:
+                            useSignature();
+                            break;
+                        case 5:
+                            verifyIdentitiy();
+                            break;
+                        case 6:
+                            createCert();
+                            break;
                         case 0:
                             dataOutputStream.writeUTF(Operations.Terminate.toString());
                             break;
@@ -122,6 +135,26 @@ class Client {
             System.out.println(e.getMessage());
         }
     }
+    public void verifyIdentitiy(){
+        if(!authinticated)
+            HandShake(Connection.IP);
+        try {
+            dataOutputStream.writeUTF(Operations.verifyIdentity.toString());
+            System.out.println("Identity verified: "+CSR.verifyIdentitiy(dataInputStream.readUTF(),keys.get(Connection.IP)));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    public void createCert(){
+        CSR csr=new CSR("Client","CleintCert");
+        try {
+            System.out.println(csr.createCertificate(new PGP(IP_ADDRESS).getPublicKey(),new PGP(IP_ADDRESS).getPrivateKey()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public void HandShake(String IP_ADDRESS){
         try {
             PGP pgp=new PGP(this.IP_ADDRESS);
@@ -161,6 +194,7 @@ class Client {
         } catch (Exception e) {
             e.printStackTrace();
         }
+        authinticated=true;
     }
     public void NoHandShake(String IP_ADDRESS){
         try {
@@ -249,12 +283,26 @@ class Client {
         try {
             dataOutputStream.writeUTF(Operations.View.toString());
             dataOutputStream.writeUTF(Encrypt(file));
+            if(sign)
+            {
+                dataOutputStream.writeUTF(Base64.getEncoder().encodeToString(digitalSignature.Create_Digital_Signature(file.getBytes(),new PGP(IP_ADDRESS).getPrivateKey())));
+            }
             System.out.println("Encrypted file name: "+Encrypt(file));
             String txt=dataInputStream.readUTF();
+            if(sign)
+            {
+                String temp=dataInputStream.readUTF();
+                byte[] signature=Base64.getDecoder().decode(temp);
+                boolean verified=digitalSignature.Verify_Digital_Signature(decrypt(txt).getBytes(),signature,keys.get(Connection.IP));
+                System.out.println("verified: "+verified);
+
+            }
             System.out.println("Encrypted Text: "+txt);
             System.out.println(decrypt(txt));
 
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -262,12 +310,41 @@ class Client {
         try {
             dataOutputStream.writeUTF(Operations.Edit.toString());
             dataOutputStream.writeUTF(Encrypt(file));
+            if(sign)
+            {
+                dataOutputStream.writeUTF(Base64.getEncoder().encodeToString(digitalSignature.Create_Digital_Signature(file.getBytes(),new PGP(IP_ADDRESS).getPrivateKey())));
+            }
             System.out.println("Encrypted file name: "+Encrypt(file));
             dataOutputStream.writeUTF(Encrypt(txt));
+            if(sign)
+            {
+                dataOutputStream.writeUTF(Base64.getEncoder().encodeToString(digitalSignature.Create_Digital_Signature(txt.getBytes(),new PGP(IP_ADDRESS).getPrivateKey())));
+            }
             System.out.println("Encrypted Text: "+Encrypt(txt));
 
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
+    public void useSignature()
+    {
+        if(!authinticated)
+            HandShake(Connection.IP);
+        sign=true;
+        try {
+            dataOutputStream.writeUTF(Operations.UseSignature.toString());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+    }
+
 }

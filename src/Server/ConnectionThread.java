@@ -4,8 +4,10 @@ import Basic.Connection;
 import Basic.Encryption;
 import Basic.Operations;
 import Basic.Response;
+import Encryp.CSR;
 import Encryp.PGP;
 import Encryp.Symmetric;
+import Encryp.digitalSignature;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
@@ -30,6 +32,8 @@ public class ConnectionThread {
     protected Encryption encryption;
     protected String IP_Address;
     protected String key;
+    private boolean sign=false;
+    private boolean authinticated=false;
     public ConnectionThread(Socket socket) {
         this.socket = socket;
         try {
@@ -74,6 +78,12 @@ public class ConnectionThread {
                             HandShake();
                         else
                             NoHandShake();
+                        break;
+                    case UseSignature:
+                        UseSignature();
+                        break;
+                    case verifyIdentity:
+                        verifyIdentity();
                         break;
                     case Terminate:
                         break;
@@ -135,6 +145,18 @@ public class ConnectionThread {
         } catch (IOException e) {
             e.printStackTrace();
         }*/
+    }
+    public void UseSignature(){
+        sign=true;
+    }
+    public void verifyIdentity()
+    {
+        CSR csr=new CSR("Server","ServerCert");
+        try {
+            dataOutputStream.writeUTF(Base64.getEncoder().encodeToString(csr.createCertificate(new PGP("Server").getPublicKey(),new PGP("Server").getPrivateKey()).getEncoded()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
     /*public List<String> List_Files(){
         File dir=new File("TextFiles");
@@ -319,7 +341,19 @@ public class ConnectionThread {
         String fileName= null;
         try {
             fileName = decrypt(dataInputStream.readUTF());
+            if(sign)
+            {
+                System.out.println("verified:"+digitalSignature.Verify_Digital_Signature(fileName.getBytes(),Base64.getDecoder().decode(dataInputStream.readUTF()),main.keys.get(IP_Address)));
+            }
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (NoSuchAlgorithmException e) {
+            e.printStackTrace();
+        } catch (NoSuchPaddingException e) {
+            e.printStackTrace();
+        } catch (NoSuchProviderException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
             e.printStackTrace();
         }
         File file= new File("TextFiles/"+fileName+".txt");
@@ -327,7 +361,17 @@ public class ConnectionThread {
         {
             try {
                 dataOutputStream.writeUTF(Encrypt("File Not Found"));
+                if(sign)
+                dataOutputStream.writeUTF(Base64.getEncoder().encodeToString(digitalSignature.Create_Digital_Signature("File Not Found".getBytes(),new PGP("Server").getPrivateKey())));
             } catch (IOException e) {
+                e.printStackTrace();
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            } catch (NoSuchPaddingException e) {
+                e.printStackTrace();
+            } catch (NoSuchProviderException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -336,7 +380,18 @@ public class ConnectionThread {
             try {
                 text = new String(Files.readAllBytes(Paths.get("TextFiles/"+fileName+".txt")));
                 dataOutputStream.writeUTF(Encrypt(text));
+                if(sign)
+                dataOutputStream.writeUTF(Base64.getEncoder().encodeToString(digitalSignature.Create_Digital_Signature(text.getBytes(),new PGP("Server").getPrivateKey())));
+
             } catch (IOException e) {
+                e.printStackTrace();
+            } catch (NoSuchAlgorithmException e) {
+                e.printStackTrace();
+            } catch (NoSuchPaddingException e) {
+                e.printStackTrace();
+            } catch (NoSuchProviderException e) {
+                e.printStackTrace();
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -346,9 +401,19 @@ public class ConnectionThread {
         String txt=null;
         try {
             fileName = decrypt(dataInputStream.readUTF());
+            if(sign)
+            {
+                System.out.println("verified:"+digitalSignature.Verify_Digital_Signature(fileName.getBytes(),Base64.getDecoder().decode(dataInputStream.readUTF()),main.keys.get(IP_Address)));
+            }
             txt = decrypt(dataInputStream.readUTF());
+            if(sign)
+            {
+                System.out.println("verified:"+digitalSignature.Verify_Digital_Signature(txt.getBytes(),Base64.getDecoder().decode(dataInputStream.readUTF()),main.keys.get(IP_Address)));
+            }
 
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (Exception e) {
             e.printStackTrace();
         }
         File file= new File("TextFiles/"+fileName+".txt");
