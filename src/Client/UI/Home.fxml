@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/11.0.2" xmlns:fx="http://javafx.com/fxml/1" fx:controller="Client.UI.Home">
+   <children>
+      <GridPane prefHeight="400.0" prefWidth="600.0">
+        <columnConstraints>
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+            <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+        </columnConstraints>
+        <rowConstraints>
+          <RowConstraints maxHeight="94.0" minHeight="0.0" prefHeight="24.0" vgrow="SOMETIMES" />
+            <RowConstraints maxHeight="278.0" minHeight="9.0" prefHeight="23.0" vgrow="SOMETIMES" />
+          <RowConstraints maxHeight="328.0" minHeight="10.0" prefHeight="314.0" vgrow="SOMETIMES" />
+          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+        </rowConstraints>
+         <children>
+            <Button mnemonicParsing="false" onAction="#HandShake" prefHeight="25.0" prefWidth="144.0" text="HandShake" />
+            <Button mnemonicParsing="false" onAction="#View" prefHeight="25.0" prefWidth="141.0" text="View" GridPane.columnIndex="1" />
+            <Button mnemonicParsing="false" onAction="#Edit" prefHeight="25.0" prefWidth="249.0" text="Edit" GridPane.columnIndex="2" />
+            <Button mnemonicParsing="false" onAction="#useSignature" prefHeight="25.0" prefWidth="217.0" text="Sign" GridPane.columnIndex="3" />
+            <Button mnemonicParsing="false" onAction="#createCert" prefHeight="25.0" prefWidth="303.0" text="Cert" GridPane.columnIndex="4" />
+            <TextField fx:id="fn" promptText="File Name" GridPane.rowIndex="1" />
+            <TextArea fx:id="tf" prefHeight="200.0" prefWidth="200.0" GridPane.columnSpan="2" GridPane.rowIndex="2" />
+            <ScrollPane GridPane.columnIndex="1" GridPane.rowIndex="1">
+               <content>
+                  <Label fx:id="PK" text="Label" wrapText="true" />
+               </content>
+            </ScrollPane>
+            <ScrollPane GridPane.columnIndex="2" GridPane.rowIndex="1">
+               <content>
+                  <Label fx:id="PPK" text="Label" />
+               </content>
+            </ScrollPane>
+            <ScrollPane GridPane.columnIndex="3" GridPane.rowIndex="1">
+               <content>
+                  <Label fx:id="SK" text="Label" />
+               </content>
+            </ScrollPane>
+            <ScrollPane GridPane.columnIndex="2" GridPane.columnSpan="2147483647" GridPane.rowIndex="2">
+               <content>
+                  <Label fx:id="Cert" text="Label" />
+               </content>
+            </ScrollPane>
+         </children>
+      </GridPane>
+   </children>
+</AnchorPane>

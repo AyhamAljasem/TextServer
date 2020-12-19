@@ -32,7 +32,8 @@ public class main {
                 socket=serverSocket.accept();
                 System.out.println("Connected");
                 ConnectionThread connectionThread=new ConnectionThread(socket);
-                connectionThread.run();
+                connectionThread.start();
+
 
             } catch (IOException e) {
                 e.printStackTrace();

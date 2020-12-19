@@ -25,7 +25,7 @@ import java.security.spec.X509EncodedKeySpec;
 import java.util.Base64;
 import java.util.List;
 
-public class ConnectionThread {
+public class ConnectionThread extends Thread {
     protected Socket socket;
     protected DataInputStream dataInputStream;
     protected DataOutputStream dataOutputStream;
