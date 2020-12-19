@@ -26,6 +26,8 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.security.*;
+import java.security.cert.*;
+import java.security.cert.Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
@@ -135,19 +137,34 @@ public class Home extends Application {
             HandShake();
         try {
             dataOutputStream.writeUTF(Operations.verifyIdentity.toString());
-            System.out.println("Identity verified: "+ CSR.verifyIdentitiy(dataInputStream.readUTF(),keys.get(Connection.IP)));
+            String temp=dataInputStream.readUTF();
+            System.out.println("Identity verified: "+ CSR.verifyIdentitiy(temp,keys.get(Connection.IP)));
+            CertificateFactory certificateFactory= null;
+            try {
+                certificateFactory = CertificateFactory.getInstance("X.509");
+                Certificate certificate1=certificateFactory.generateCertificate(new ByteArrayInputStream(Base64.getDecoder().decode(temp)));
+                Cert.setText(certificate1.toString());
+
+            } catch (CertificateException e) {
+                e.printStackTrace();
+            }
+
+            dataOutputStream.writeUTF(Base64.getEncoder().encodeToString(createCert().getEncoded()));
 
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (CertificateEncodingException e) {
+            e.printStackTrace();
         }
     }
-    public void createCert(){
+    public X509Certificate createCert(){
         CSR csr=new CSR("Client","CleintCert");
         try {
-            Cert.setText(csr.createCertificate(new PGP(IP_ADDRESS).getPublicKey(),new PGP(IP_ADDRESS).getPrivateKey()).toString());
+            return csr.createCertificate(new PGP(IP_ADDRESS).getPublicKey(),new PGP(IP_ADDRESS).getPrivateKey());
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return null;
     }
 
     public void HandShake(){

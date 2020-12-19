@@ -19,6 +19,8 @@ import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.*;
+import java.security.cert.CertificateEncodingException;
+import java.security.cert.X509Certificate;
 import java.security.spec.InvalidKeySpecException;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.*;
@@ -141,18 +143,22 @@ class Client {
         try {
             dataOutputStream.writeUTF(Operations.verifyIdentity.toString());
             System.out.println("Identity verified: "+CSR.verifyIdentitiy(dataInputStream.readUTF(),keys.get(Connection.IP)));
+            dataOutputStream.writeUTF(Base64.getEncoder().encodeToString(createCert().getEncoded()));
 
         } catch (IOException e) {
             e.printStackTrace();
+        } catch (CertificateEncodingException e) {
+            e.printStackTrace();
         }
     }
-    public void createCert(){
+    public X509Certificate createCert(){
         CSR csr=new CSR("Client","CleintCert");
         try {
-            System.out.println(csr.createCertificate(new PGP(IP_ADDRESS).getPublicKey(),new PGP(IP_ADDRESS).getPrivateKey()));
+            return csr.createCertificate(new PGP(IP_ADDRESS).getPublicKey(),new PGP(IP_ADDRESS).getPrivateKey());
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return null;
     }
 
     public void HandShake(String IP_ADDRESS){

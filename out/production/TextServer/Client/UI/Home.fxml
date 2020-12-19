@@ -24,7 +24,7 @@
             <Button mnemonicParsing="false" onAction="#View" prefHeight="25.0" prefWidth="141.0" text="View" GridPane.columnIndex="1" />
             <Button mnemonicParsing="false" onAction="#Edit" prefHeight="25.0" prefWidth="249.0" text="Edit" GridPane.columnIndex="2" />
             <Button mnemonicParsing="false" onAction="#useSignature" prefHeight="25.0" prefWidth="217.0" text="Sign" GridPane.columnIndex="3" />
-            <Button mnemonicParsing="false" onAction="#createCert" prefHeight="25.0" prefWidth="303.0" text="Cert" GridPane.columnIndex="4" />
+            <Button mnemonicParsing="false" onAction="#verifyIdentitiy" prefHeight="25.0" prefWidth="303.0" text="Cert" GridPane.columnIndex="4" />
             <TextField fx:id="fn" promptText="File Name" GridPane.rowIndex="1" />
             <TextArea fx:id="tf" prefHeight="200.0" prefWidth="200.0" GridPane.columnSpan="2" GridPane.rowIndex="2" />
             <ScrollPane GridPane.columnIndex="1" GridPane.rowIndex="1">

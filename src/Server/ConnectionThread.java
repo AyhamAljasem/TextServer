@@ -154,6 +154,9 @@ public class ConnectionThread extends Thread {
         CSR csr=new CSR("Server","ServerCert");
         try {
             dataOutputStream.writeUTF(Base64.getEncoder().encodeToString(csr.createCertificate(new PGP("Server").getPublicKey(),new PGP("Server").getPrivateKey()).getEncoded()));
+            String temp=dataInputStream.readUTF();
+            System.out.println("Identity verified: "+ CSR.verifyIdentitiy(temp,main.keys.get(IP_Address)));
+            System.out.println(temp);
         } catch (Exception e) {
             e.printStackTrace();
         }

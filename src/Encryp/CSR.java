@@ -28,6 +28,7 @@ public class CSR {
 
     public CSR(String CERTIFICATE_ALIAS, String CERTIFICATE_NAME) {
         this.CERTIFICATE_ALIAS = CERTIFICATE_ALIAS;
+        CERTIFICATE_DN = "CN="+CERTIFICATE_ALIAS+", O=o, L=L, ST=il, C= c";
         this.CERTIFICATE_NAME = CERTIFICATE_NAME;
     }
 
